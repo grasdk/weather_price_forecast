@@ -72,7 +72,7 @@ class YrLocationForecastClient:
         except ValueError:
             return False
 
-    def get_forecast(() -> dict:
+    def get_forecast(self) -> dict:
         """Fetches forecast data using local disk cache and HTTP conditional GETs."""
         meta = self._load_cache_meta()
         expires = meta.get("expires")

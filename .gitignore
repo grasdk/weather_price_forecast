@@ -1,3 +1,7 @@
+# project specific ignores
+raw_forecast.json
+cache_meta.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
