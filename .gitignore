@@ -1,6 +1,10 @@
 # project specific ignores
 raw_forecast.json
 cache_meta.json
+weather_cache_meta.json
+electricity_cache_meta.json
+raw_electricity_prices.json
+aggregated_data.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

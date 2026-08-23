@@ -1,4 +1,5 @@
 {
-  "app_name": "WeatherDataForMyInfoScreen",
-  "contact_info": "https://github.com/grasdk/py-yr.no-weather"
+  "datafolder": "../datadir",
+  "app_name": "WeatherAndElectricityPriceDataForMyInfoScreen",
+  "contact_info": "https://github.com/grasdk/weather_price_forecast"
 }

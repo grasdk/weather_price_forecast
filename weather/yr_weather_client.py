@@ -1,17 +1,20 @@
 import datetime
+import argparse
 import json
 import os
+from pathlib import Path
 import requests
 
 # ==============================================================================
 # FILE PATH CONSTANTS
 # ==============================================================================
-SITE_CONFIG_FILE = "site_info.json"
-LOCATION_CONFIG_FILE = "location.json"
+SCRIPT_FOLDER = Path(__file__).resolve().parent
+SITE_CONFIG_FILE = SCRIPT_FOLDER / "site_info.json"
+LOCATION_CONFIG_FILE = SCRIPT_FOLDER / "location.json"
 RAW_DATA_FILE = "raw_forecast.json"
-CACHE_META_FILE = "cache_meta.json"
+CACHE_META_FILE = "weather_cache_meta.json"
 
-BASE_URL = "https://api.met.no/weatherapi/locationforecast/2.0/compact"
+BASE_URL = "https://api.met.no/weatherapi/locationforecast/2.0/complete"
 
 
 def load_json_file(filepath: str) -> dict:
@@ -23,10 +26,19 @@ def load_json_file(filepath: str) -> dict:
 
 
 class YrLocationForecastClient:
-    def __init__(self, site_config_path: str, location_config_path: str):
+    def __init__(self, site_config_path: str, location_config_path: str, datafolder: str = None):
         # Load external configuration files
         self.site_info = load_json_file(site_config_path)
         self.location_info = load_json_file(location_config_path)
+
+        config_folder = Path(site_config_path).resolve().parent
+        configured_datafolder = datafolder or self.site_info.get("datafolder", ".")
+        self.datafolder = Path(configured_datafolder).expanduser()
+        if datafolder is None:
+            self.datafolder = config_folder / self.datafolder
+        self.datafolder = self.datafolder.resolve()
+        self.raw_data_file = self.datafolder / RAW_DATA_FILE
+        self.cache_meta_file = self.datafolder / CACHE_META_FILE
 
         # MET Norway requires coordinates rounded to max 4 decimal places
         self.lat = round(float(self.location_info["latitude"]), 4)
@@ -41,9 +53,9 @@ class YrLocationForecastClient:
 
     def _load_cache_meta(self) -> dict:
         """Loads persistent cache metadata (Expires & Last-Modified) from disk."""
-        if os.path.exists(CACHE_META_FILE):
+        if self.cache_meta_file.exists():
             try:
-                with open(CACHE_META_FILE, "r", encoding="utf-8") as f:
+                with open(self.cache_meta_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except json.JSONDecodeError:
                 return {}
@@ -55,12 +67,12 @@ class YrLocationForecastClient:
             "expires": expires,
             "last_modified": last_modified
         }
-        with open(CACHE_META_FILE, "w", encoding="utf-8") as f:
+        with open(self.cache_meta_file, "w", encoding="utf-8") as f:
             json.dump(meta, f, indent=2)
 
     def _is_cache_valid(self, expires_header: str) -> bool:
         """Checks if current time is before the 'Expires' header timestamp."""
-        if not expires_header or not os.path.exists(RAW_DATA_FILE):
+        if not expires_header or not self.raw_data_file.exists():
             return False
 
         try:
@@ -81,7 +93,7 @@ class YrLocationForecastClient:
         # Check local disk cache validity
         if self._is_cache_valid(expires):
             print("--> Local file cache is valid. Reading raw JSON from disk...")
-            with open(RAW_DATA_FILE, "r", encoding="utf-8") as f:
+            with open(self.raw_data_file, "r", encoding="utf-8") as f:
                 return json.load(f)
 
         headers = {"User-Agent": self.user_agent}
@@ -97,7 +109,7 @@ class YrLocationForecastClient:
             new_expires = response.headers.get("Expires", expires)
             self._save_cache_meta(new_expires, last_modified)
             
-            with open(RAW_DATA_FILE, "r", encoding="utf-8") as f:
+            with open(self.raw_data_file, "r", encoding="utf-8") as f:
                 return json.load(f)
 
         elif response.status_code == 203:
@@ -115,7 +127,7 @@ class YrLocationForecastClient:
         raw_json_data = response.json()
         print(f"<-- {response.status_code} OK: Writing raw forecast JSON to '{RAW_DATA_FILE}'...")
         
-        with open(RAW_DATA_FILE, "w", encoding="utf-8") as f:
+        with open(self.raw_data_file, "w", encoding="utf-8") as f:
             json.dump(raw_json_data, f, indent=2, ensure_ascii=False)
 
         # Update cache metadata
@@ -130,9 +142,14 @@ class YrLocationForecastClient:
 # EXECUTION
 # ==============================================================================
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Fetch the Yr weather forecast.")
+    parser.add_argument("--datafolder", help="Root data folder; overrides datafolder in site_info.json.")
+    args = parser.parse_args()
+
     client = YrLocationForecastClient(
         site_config_path=SITE_CONFIG_FILE,
-        location_config_path=LOCATION_CONFIG_FILE
+        location_config_path=LOCATION_CONFIG_FILE,
+        datafolder=args.datafolder
     )
 
     data = client.get_forecast()

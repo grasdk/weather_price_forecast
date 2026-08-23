@@ -1,0 +1,5 @@
+{
+  "datafolder": "./datadir",
+  "location_file": "weather/location.json",
+  "electricity_config_file": "electricity/electricity_config.json"
+}

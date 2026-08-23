@@ -1,0 +1,13 @@
+{
+  "datafolder": "../datadir",
+  "product_name": "OK El Højt forbrug med Dansk Vindstrøm",
+  "product_id": "ok_el_hoj_dansk-vindstroem",
+  "supplier_id": "n1_344",
+  "customer_group_id": "c",
+  "price_area": "DK1",
+  "lean": true,
+  "forecast": true,
+  "aggregation": "1h",
+  "aggregation_method": "mean",
+  "days_ahead": 7
+}
