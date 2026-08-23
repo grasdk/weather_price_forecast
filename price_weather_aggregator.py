@@ -104,13 +104,13 @@ def aggregate_data(
     configured_location_file = location_file or config.get("location_file", LOCATION_FILE)
     location_path = Path(configured_location_file).expanduser()
     if not location_path.is_absolute():
-        location_path = data_root / location_path
+        location_path = config_folder / location_path
     configured_electricity_config_file = electricity_config_file or config.get(
         "electricity_config_file", ELECTRICITY_CONFIG_FILE
     )
     electricity_config_path = Path(configured_electricity_config_file).expanduser()
     if not electricity_config_path.is_absolute():
-        electricity_config_path = data_root / electricity_config_path
+        electricity_config_path = config_folder / electricity_config_path
     weather_file = data_root / WEATHER_FILE
     electricity_file = data_root / ELECTRICITY_FILE
     output_file = data_root / OUTPUT_FILE
