@@ -1,7 +1,6 @@
 # project specific ignores
 raw_forecast.json
 cache_meta.json
-location.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
